@@ -8,8 +8,8 @@
 # Note: This Makefile can be modified to include any future non-docker build
 # tasks as well.
 
-IMAGE_NAME := mheese/journalbeat
-IMAGE_BUILD_NAME := mheese-journalbeat-build
+IMAGE_NAME := therealwardo/journalbeat
+IMAGE_BUILD_NAME := therealwardo-journalbeat-build
 GIT_BRANCH_NAME := $(shell git rev-parse --abbrev-ref HEAD | sed "sX/X-Xg")
 GIT_TAG_NAME := $(shell git describe --tags)
 
@@ -47,7 +47,7 @@ build/journalbeat:
 	mkdir -p build
 	docker build -t $(IMAGE_BUILD_NAME) .
 	docker run --name $(IMAGE_BUILD_NAME) $(IMAGE_BUILD_NAME)
-	-docker cp $(IMAGE_BUILD_NAME):/go/src/github.com/mheese/journalbeat/journalbeat build/journalbeat
+	-docker cp $(IMAGE_BUILD_NAME):/go/src/github.com/therealwardo/journalbeat/journalbeat build/journalbeat
 	docker rm $(IMAGE_BUILD_NAME)
 	docker rmi $(IMAGE_BUILD_NAME)
 

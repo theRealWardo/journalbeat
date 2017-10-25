@@ -27,8 +27,8 @@ import (
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/elastic/beats/libbeat/publisher"
-	"github.com/mheese/journalbeat/config"
-	"github.com/mheese/journalbeat/journal"
+	"github.com/therealwardo/journalbeat/config"
+	"github.com/therealwardo/journalbeat/journal"
 )
 
 // Journalbeat is the main Journalbeat struct
