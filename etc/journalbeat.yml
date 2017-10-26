@@ -11,7 +11,7 @@ journalbeat:
   #cursor_seek_fallback: tail
 
   # Store the cursor of the successfully published events
-  #write_cursor_state: true
+  write_cursor_state: false
 
   # Path to the file to store the cursor (defaults to ".journalbeat-cursor-state")
   #cursor_state_file: .journalbeat-cursor-state
@@ -53,7 +53,7 @@ journalbeat:
   #move_metadata_to_field: ""
 
   # Specific units to monitor.
-  #units: ["httpd.service"]
+  units: ["docker.service"]
 
   # Specify Journal paths to open. You can pass an array of paths to Systemd Journal paths.
   # If you want to open Journal from directory just pass an array consisting of one element
@@ -62,6 +62,25 @@ journalbeat:
   #journal_paths: ["/var/log/journal"]
 
   #default_type: journal
+
+  # If an event comes from Docker, additional metadata about the container can be attached
+  # to the event. Note that you can configure the journald logging driver in Docker to
+  # include some metadata via logging options as well.
+  docker_metadata:
+    enabled: true
+    #connection:
+      #endpoint: "unix:///var/run/docker.sock"
+      # TLS is NOT enabled by default but can be configured here.
+      #cert: "cert.pem"
+      #key: "key.pem"
+      #ca: "ca.pem"
+    #container_id_field: "CONTAINER_ID"
+    #env: []
+    labels: ["io.kubernetes.container.name", "io.kubernetes.pod.name", "io.kubernetes.pod.namespace"]
+    metadata:
+      - field: "image"
+        format: "{{.Config.Image}}"
+
 
 #================================ General ======================================
 
@@ -113,11 +132,11 @@ name: journalbeat
 # contain CPU load percentages, but remove the fields that contain CPU ticks
 # values:
 #
-#processors:
+processors:
 #- include_fields:
 #    fields: ["cpu"]
-#- drop_fields:
-#    fields: ["cpu.user", "cpu.system"]
+- drop_fields:
+    fields: ["_BOOT_ID", "_CAP_EFFECTIVE", "_CMDLINE"]
 #
 # The following example drops the events that have the HTTP response code 200:
 #
@@ -205,7 +224,7 @@ output.elasticsearch:
   # These settings can be adjusted to load your own template or overwrite existing ones.
 
   # Set to false to disable template loading.
-  #template.enabled: true
+  template.enabled: false
 
   # Template name. By default the template name is beatname.
   #template.name: "beatname"
@@ -586,12 +605,12 @@ output.elasticsearch:
 
 
 #----------------------------- Console output ---------------------------------
-#output.console:
+output.console:
   # Boolean flag to enable or disable the output module.
-  #enabled: true
+  enabled: true
 
   # Pretty print json event
-  #pretty: false
+  pretty: false
 
 #================================= Paths ======================================
 
@@ -686,8 +705,8 @@ output.elasticsearch:
 
 # Logging to rotating files files. Set logging.to_files to false to disable logging to
 # files.
-logging.to_files: true
-logging.files:
+#logging.to_files: true
+#logging.files:
   # Configure the path where the logs are written. The default is the logs directory
   # under the home path (the binary location).
   #path: /var/log/beatname

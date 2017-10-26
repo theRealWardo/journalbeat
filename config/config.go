@@ -21,29 +21,53 @@ import (
 	"fmt"
 	"path/filepath"
 	"regexp"
+	"text/template"
 	"time"
 )
 
 // Config provides the config settings for the journald reader
 type Config struct {
-	SeekPosition         string             `config:"seek_position"`
-	ConvertToNumbers     bool               `config:"convert_to_numbers"`
-	CleanFieldNames      bool               `config:"clean_field_names"`
-	WriteCursorState     bool               `config:"write_cursor_state"`
-	CursorStateFile      string             `config:"cursor_state_file"`
-	CursorFlushPeriod    time.Duration      `config:"cursor_flush_period" validate:"min=0"`
-	PendingQueue         pendingQueueConfig `config:"pending_queue"`
-	CursorSeekFallback   string             `config:"cursor_seek_fallback"`
-	MoveMetadataLocation string             `config:"move_metadata_to_field"`
-	DefaultType          string             `config:"default_type"`
-	Units                []string           `config:"units"`
-	JournalPaths         []string           `config:"journal_paths"`
+	SeekPosition         string               `config:"seek_position"`
+	ConvertToNumbers     bool                 `config:"convert_to_numbers"`
+	CleanFieldNames      bool                 `config:"clean_field_names"`
+	WriteCursorState     bool                 `config:"write_cursor_state"`
+	CursorStateFile      string               `config:"cursor_state_file"`
+	CursorFlushPeriod    time.Duration        `config:"cursor_flush_period" validate:"min=0"`
+	PendingQueue         pendingQueueConfig   `config:"pending_queue"`
+	CursorSeekFallback   string               `config:"cursor_seek_fallback"`
+	MoveMetadataLocation string               `config:"move_metadata_to_field"`
+	DefaultType          string               `config:"default_type"`
+	Units                []string             `config:"units"`
+	JournalPaths         []string             `config:"journal_paths"`
+	DockerMetadata       DockerMetadataConfig `config:"docker_metadata"`
 }
 
 type pendingQueueConfig struct {
 	File               string        `config:"file"`
 	FlushPeriod        time.Duration `config:"flush_period" validate:"min=0"`
 	CompletedQueueSize uint16        `config:"completed_queue_size"`
+}
+
+type DockerMetadataConfig struct {
+	Enabled          bool                            `config:"enabled"`
+	Connection       DockerConnectionConfig          `config:"connection"`
+	ContainerIdField string                          `config:"container_id_field"`
+	Env              []string                        `config:"env"`
+	Labels           []string                        `config:"labels"`
+	Metadata         []DockerFormattedMetadataConfig `config:"metadata"`
+}
+
+type DockerConnectionConfig struct {
+	Endpoint string `config:"endpoint"`
+	Cert     string `config:"cert"`
+	Key      string `config:"key"`
+	CA       string `config:"ca"`
+}
+
+type DockerFormattedMetadataConfig struct {
+	Field    string `config:"field"`
+	Format   string `config:"format"`
+	Template *template.Template
 }
 
 // Named constants for the journal cursor placement positions

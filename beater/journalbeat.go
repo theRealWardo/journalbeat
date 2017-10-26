@@ -27,17 +27,20 @@ import (
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/elastic/beats/libbeat/publisher"
+	docker "github.com/fsouza/go-dockerclient"
 	"github.com/therealwardo/journalbeat/config"
 	"github.com/therealwardo/journalbeat/journal"
 )
 
 // Journalbeat is the main Journalbeat struct
 type Journalbeat struct {
-	done   chan struct{}
-	config config.Config
-	client publisher.Client
+	done       chan struct{}
+	config     config.Config
+	client     publisher.Client
+	containers map[string]*docker.Container
 
 	journal *sdjournal.Journal
+	docker  *docker.Client
 
 	cursorChan         chan string
 	pending, completed chan *eventReference
@@ -168,10 +171,16 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 		cursorChan: make(chan string),
 		pending:    make(chan *eventReference),
 		completed:  make(chan *eventReference, config.PendingQueue.CompletedQueueSize),
+		containers: make(map[string]*docker.Container),
 	}
 
 	if err = jb.initJournal(); err != nil {
 		logp.Err("Failed to connect to the Systemd Journal: %v", err)
+		return nil, err
+	}
+
+	if err = jb.initDocker(); err != nil {
+		logp.Err("Failed to connect to Docker: %v", err)
 		return nil, err
 	}
 
@@ -210,6 +219,11 @@ func (jb *Journalbeat) Run(b *beat.Beat) error {
 			jb.config.CleanFieldNames,
 			jb.config.ConvertToNumbers,
 			jb.config.MoveMetadataLocation)
+
+		// Try to attach Docker metadata if requested.
+		if jb.config.DockerMetadata.Enabled {
+			jb.addDockerMetadata(event)
+		}
 
 		if _, ok := event["type"].(string); !ok {
 			event["type"] = jb.config.DefaultType
